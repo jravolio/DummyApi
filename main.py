@@ -6,28 +6,20 @@ app = Flask(__name__)
 data = []
 
 def register_user(username, index=None):
-    for dictionary in data:
-        if username in dictionary:
-            if index is not None:
-                return jsonify(dictionary.get(username)[index]), 200
-            else:
-                return jsonify(dictionary.get(username)), 200
-    
-    # If username is not found, create a new dictionary and append it to data
     new_dict = {username: [
-        {
-            'título': 'Sua História',
-            'autor': 'Autora'
-        },
-        {
-            'título': 'Microsoft',
-            'autor': 'teste'
-        },
-        {
-            'título': 'do Ano',
-            'autor': 'Jeff Bezos'
-        }
-    ]}
+            {
+                'título': 'Sua História',
+                'autor': 'Autora'
+            },
+            {
+                'título': 'Microsoft',
+                'autor': 'teste'
+            },
+            {
+                'título': 'do Ano',
+                'autor': 'Jeff Bezos'
+            }
+        ]}
     data.append(new_dict)
 
     if index is not None:
@@ -35,8 +27,7 @@ def register_user(username, index=None):
     else:
         return jsonify(new_dict.get(username)), 200
 
-
-# Get the index of the dictionary that contains the key 'username'
+# Get the index of the dictionary that contains the key 'jravolio'
 @app.route('/data/<username>')
 def get_data(username):
     for dictionary in data:
@@ -48,9 +39,9 @@ def get_data(username):
 
 @app.route('/data/<username>/<int:index>')
 def get_data_index(username, index):
-    username = request.username
     for dictionary in data:
         if username in dictionary:
+            print(request.remote_addr)
             if index >= len(dictionary.get(username)):
                 return jsonify('Index out of range, the data you are trying to acess does not exist.'), 400
             return jsonify(dictionary.get(username)[index])
@@ -60,7 +51,6 @@ def get_data_index(username, index):
 
 @app.route('/data/<username>', methods=['POST'])
 def create_data(username):
-    username = request.username
     json_data = request.get_json()
 
     for dictionary in data:
@@ -79,7 +69,6 @@ def create_data(username):
 
 @app.route('/data/<username>/<int:index>', methods=['PUT'])
 def update_data(username, index):
-    username = request.username
     json_data = request.get_json()
 
     for dictionary in data:
@@ -91,7 +80,6 @@ def update_data(username, index):
 
 @app.route('/data/<username>/<int:index>', methods=['DELETE'])
 def delete_data(username, index):
-    username = request.username
     for dictionary in data:
         if username in dictionary:
             if index < len(dictionary.get(username)):
