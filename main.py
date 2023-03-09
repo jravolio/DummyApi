@@ -6,26 +6,35 @@ app = Flask(__name__)
 data = []
 
 def register_user(remote_addr, index=None):
+    for dictionary in data:
+        if remote_addr in dictionary:
+            if index is not None:
+                return jsonify(dictionary.get(remote_addr)[index]), 200
+            else:
+                return jsonify(dictionary.get(remote_addr)), 200
+    
+    # If remote_addr is not found, create a new dictionary and append it to data
     new_dict = {remote_addr: [
-            {
-                'título': 'Sua História',
-                'autor': 'Autora'
-            },
-            {
-                'título': 'Microsoft',
-                'autor': 'teste'
-            },
-            {
-                'título': 'do Ano',
-                'autor': 'Jeff Bezos'
-            }
-        ]}
+        {
+            'título': 'Sua História',
+            'autor': 'Autora'
+        },
+        {
+            'título': 'Microsoft',
+            'autor': 'teste'
+        },
+        {
+            'título': 'do Ano',
+            'autor': 'Jeff Bezos'
+        }
+    ]}
     data.append(new_dict)
 
     if index is not None:
         return jsonify(new_dict.get(remote_addr)[index]), 200
     else:
         return jsonify(new_dict.get(remote_addr)), 200
+
 
 # Get the index of the dictionary that contains the key 'remote_addr'
 @app.route('/data')
