@@ -37,7 +37,7 @@ def register_user(username, index=None):
 
 
 # Get the index of the dictionary that contains the key 'username'
-@app.route('/data')
+@app.route('/data/<username>')
 def get_data(username):
     for dictionary in data:
         if username in dictionary:
@@ -46,7 +46,7 @@ def get_data(username):
     # If username is not found, create a new dictionary and append it to data
     return register_user(username)
 
-@app.route('/data/<int:index>')
+@app.route('/data/<username>/<int:index>')
 def get_data_index(username, index):
     username = request.username
     for dictionary in data:
@@ -58,7 +58,7 @@ def get_data_index(username, index):
     
     return register_user(username, index)
 
-@app.route('/data', methods=['POST'])
+@app.route('/data/<username>', methods=['POST'])
 def create_data(username):
     username = request.username
     json_data = request.get_json()
@@ -77,7 +77,7 @@ def create_data(username):
     return jsonify(json_data), 200
 
 
-@app.route('/data/<int:index>', methods=['PUT'])
+@app.route('/data/<username>/<int:index>', methods=['PUT'])
 def update_data(username, index):
     username = request.username
     json_data = request.get_json()
@@ -89,7 +89,7 @@ def update_data(username, index):
     
     return 'User not found.', 404
 
-@app.route('/data/<int:index>', methods=['DELETE'])
+@app.route('/data/<username>/<int:index>', methods=['DELETE'])
 def delete_data(username, index):
     username = request.username
     for dictionary in data:
