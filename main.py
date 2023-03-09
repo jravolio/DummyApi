@@ -5,16 +5,16 @@ app = Flask(__name__)
 
 data = []
 
-def register_user(remote_addr, index=None):
+def register_user(username, index=None):
     for dictionary in data:
-        if remote_addr in dictionary:
+        if username in dictionary:
             if index is not None:
-                return jsonify(dictionary.get(remote_addr)[index]), 200
+                return jsonify(dictionary.get(username)[index]), 200
             else:
-                return jsonify(dictionary.get(remote_addr)), 200
+                return jsonify(dictionary.get(username)), 200
     
-    # If remote_addr is not found, create a new dictionary and append it to data
-    new_dict = {remote_addr: [
+    # If username is not found, create a new dictionary and append it to data
+    new_dict = {username: [
         {
             'título': 'Sua História',
             'autor': 'Autora'
@@ -31,72 +31,71 @@ def register_user(remote_addr, index=None):
     data.append(new_dict)
 
     if index is not None:
-        return jsonify(new_dict.get(remote_addr)[index]), 200
+        return jsonify(new_dict.get(username)[index]), 200
     else:
-        return jsonify(new_dict.get(remote_addr)), 200
+        return jsonify(new_dict.get(username)), 200
 
 
-# Get the index of the dictionary that contains the key 'remote_addr'
+# Get the index of the dictionary that contains the key 'username'
 @app.route('/data')
-def get_data():
-    remote_addr = request.remote_addr
+def get_data(username):
     for dictionary in data:
-        if remote_addr in dictionary:
-            return jsonify(dictionary.get(remote_addr))
+        if username in dictionary:
+            return jsonify(dictionary.get(username))
 
-    # If remote_addr is not found, create a new dictionary and append it to data
-    return register_user(remote_addr)
+    # If username is not found, create a new dictionary and append it to data
+    return register_user(username)
 
 @app.route('/data/<int:index>')
-def get_data_index(index):
-    remote_addr = request.remote_addr
+def get_data_index(username, index):
+    username = request.username
     for dictionary in data:
-        if remote_addr in dictionary:
-            if index >= len(dictionary.get(remote_addr)):
+        if username in dictionary:
+            if index >= len(dictionary.get(username)):
                 return jsonify('Index out of range, the data you are trying to acess does not exist.'), 400
-            return jsonify(dictionary.get(remote_addr)[index])
+            return jsonify(dictionary.get(username)[index])
 
     
-    return register_user(remote_addr, index)
+    return register_user(username, index)
 
 @app.route('/data', methods=['POST'])
-def create_data():
-    remote_addr = request.remote_addr
+def create_data(username):
+    username = request.username
     json_data = request.get_json()
 
     for dictionary in data:
-        if remote_addr in dictionary:
-            dictionary.get(remote_addr).append(json_data)
+        if username in dictionary:
+            dictionary.get(username).append(json_data)
             return jsonify(json_data), 200
 
     if json_data is None:
         return 'Data not provided.', 400
 
-    register_user(remote_addr)
+    register_user(username)
 
-    data[-1][remote_addr].append(json_data)
+    data[-1][username].append(json_data)
     return jsonify(json_data), 200
 
 
 @app.route('/data/<int:index>', methods=['PUT'])
-def update_data(index):
-    remote_addr = request.remote_addr
+def update_data(username, index):
+    username = request.username
     json_data = request.get_json()
 
     for dictionary in data:
-        if remote_addr in dictionary:
-            dictionary.get(remote_addr)[index].update(json_data)
+        if username in dictionary:
+            dictionary.get(username)[index].update(json_data)
             return jsonify(json_data), 200
     
     return 'User not found.', 404
 
 @app.route('/data/<int:index>', methods=['DELETE'])
-def delete_data(index):
-    remote_addr = request.remote_addr
+def delete_data(username, index):
+    username = request.username
     for dictionary in data:
-        if remote_addr in dictionary:
-            if index < len(dictionary.get(remote_addr)):
-                del dictionary.get(remote_addr)[index]
+        if username in dictionary:
+            if index < len(dictionary.get(username)):
+                del dictionary.get(username)[index]
                 return 'Data deleted successfully.', 200
             else:
                 return 'Data index out of range.', 400
