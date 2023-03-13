@@ -91,4 +91,4 @@ def delete_data(username, index):
     return 'Data not found.', 404
 
 if __name__ == '__main__':
-    app.run(debug=True, port=os.getenv("PORT", default=5000))
+    app.run(threaded=True, port=os.getenv("PORT", default=5000))
