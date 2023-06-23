@@ -1,53 +1,58 @@
 from flask import Flask, request, jsonify
 import os
+from pymongo import MongoClient
+from bson import json_util
 
 app = Flask(__name__)
-
+client = MongoClient('localhost', 27017)
+db = client.DummyApi
 data = []
 
-def register_user(username, index=None):
-    new_dict = {username: [
-            {
-                'título': 'Sua História',
-                'autor': 'Autora'
-            },
-            {
-                'título': 'Microsoft',
-                'autor': 'teste'
-            },
-            {
-                'título': 'do Ano',
-                'autor': 'Jeff Bezos'
-            }
-        ]}
-    data.append(new_dict)
 
-    if index is not None:
-        return jsonify(new_dict.get(username)[index]), 200
-    else:
-        return jsonify(new_dict.get(username)), 200
+def register_user(username):
+    userCollection = db[username]
+    newData = [
+        {
+            'título': 'Sua História',
+            'autor': 'Autora'
+        },
+        {
+            'título': 'Microsoft',
+            'autor': 'teste'
+        },
+        {
+            'título': 'do Ano',
+            'autor': 'Jeff Bezos'
+        }
+    ]
+    userCollection.insert_many(newData)
+    dado = []
+    documents = userCollection.find()
+    for document in documents:
+        # Convert ObjectId to string representation
+        document['_id'] = str(document['_id'])
+        dado.append(document)
+    return jsonify(dado), 200
 
-# Get the index of the dictionary that contains the key 'jravolio'
 @app.route('/data/<username>')
 def get_data(username):
-    for dictionary in data:
-        if username in dictionary:
-            return jsonify(dictionary.get(username))
+    if username in db.list_collection_names():
+        dado = []
+        documents = db[username].find()
+        for document in documents:
+            # Convert ObjectId to string representation
+            document['_id'] = str(document['_id'])
+            dado.append(document)
+        return jsonify(dado), 200
 
-    # If username is not found, create a new dictionary and append it to data
+    # If username is not found, create a new collection and append it to data
     return register_user(username)
 
-@app.route('/data/<username>/<int:index>')
-def get_data_index(username, index):
-    for dictionary in data:
-        if username in dictionary:
-            print(request.remote_addr)
-            if index >= len(dictionary.get(username)):
-                return jsonify('Index out of range, the data you are trying to acess does not exist.'), 400
-            return jsonify(dictionary.get(username)[index])
-
-    
-    return register_user(username, index)
+@app.route('/data/<username>/<int:id>')
+def get_data_index(username, id):
+    print(db[username].find({f"_id": f"{id}"}))
+    print("teste")
+    return jsonify(db[username].find({f"_id": f"{id}"}))
 
 @app.route('/data/<username>', methods=['POST'])
 def create_data(username):
