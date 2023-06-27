@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify
 import os
 from pymongo import MongoClient
+from bson.objectid import ObjectId
 from bson import json_util
+import json
+
 
 app = Flask(__name__)
 client = MongoClient('localhost', 27017)
@@ -48,52 +51,61 @@ def get_data(username):
     # If username is not found, create a new collection and append it to data
     return register_user(username)
 
-@app.route('/data/<username>/<int:id>')
+@app.route('/data/<username>/<id>')
 def get_data_index(username, id):
-    print(db[username].find({f"_id": f"{id}"}))
-    print("teste")
-    return jsonify(db[username].find({f"_id": f"{id}"}))
+    try:
+        document = db[username].find_one({"_id": ObjectId(id)})
+        if document:
+            # Convert ObjectId to string representation
+            document['_id'] = str(document['_id'])
+            return jsonify(document), 200
+        else:
+            return jsonify({"error": "Document not found"}), 404
+    except:
+        return jsonify({"error": "Id is not a valid ObjectId, it must be a 12-byte input or a 24-character hex string"})
 
 @app.route('/data/<username>', methods=['POST'])
 def create_data(username):
     json_data = request.get_json()
 
-    for dictionary in data:
-        if username in dictionary:
-            dictionary.get(username).append(json_data)
-            return jsonify(json_data), 200
+    if username in db.list_collection_names():
+        db[username].insert_one(json_data)
+        return jsonify({"message": "Success!"}), 200
+    
+    register_user()
 
-    if json_data is None:
-        return 'Data not provided.', 400
-
-    register_user(username)
-
-    data[-1][username].append(json_data)
-    return jsonify(json_data), 200
-
-
-@app.route('/data/<username>/<int:index>', methods=['PUT'])
-def update_data(username, index):
+@app.route('/data/<username>/<id>', methods=['PUT'])
+def update_data(username, id):
     json_data = request.get_json()
 
-    for dictionary in data:
-        if username in dictionary:
-            dictionary.get(username)[index].update(json_data)
-            return jsonify(json_data), 200
-    
-    return 'User not found.', 404
+    if username in db.list_collection_names():
+        document = db[username].find_one({"_id": ObjectId(id)})
+        
+        if document:
+            # Update the document with the provided JSON data
+            db[username].update_one({'_id': document['_id']}, {'$set': json_data})
+            
+            # Fetch the updated document
+            updated_document = db[username].find_one({'_id': document['_id']})
+            
+            # Convert ObjectId to string representation
+            updated_document['_id'] = str(updated_document['_id'])
+            
+            return jsonify(updated_document), 200
+        else:
+            return jsonify({"error": "Document not found"}), 404
+    else:
+        return jsonify({"error": "User not found"}), 404
 
-@app.route('/data/<username>/<int:index>', methods=['DELETE'])
-def delete_data(username, index):
-    for dictionary in data:
-        if username in dictionary:
-            if index < len(dictionary.get(username)):
-                del dictionary.get(username)[index]
-                return 'Data deleted successfully.', 200
-            else:
-                return 'Data index out of range.', 400
+
+@app.route('/data/<username>/<id>', methods=['DELETE'])
+def delete_data(username, id):
+
+    if username in db.list_collection_names():
+        db[username].delete_one({"_id": ObjectId(id)})
+        return jsonify({"message": "Delete succesfull!"})
     
     return 'Data not found.', 404
 
 if __name__ == '__main__':
-    app.run(threaded=True, port=os.getenv("PORT", default=5000))
+    app.run(threaded=True,port=os.getenv("PORT", default=5000))
