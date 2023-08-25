@@ -1,0 +1,3 @@
+
+MONGODB_NAME = 'localhost'
+MONGODB_PORT = 27017
