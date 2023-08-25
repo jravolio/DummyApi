@@ -2,53 +2,45 @@ from flask import Flask, request, jsonify
 import os
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from bson import json_util
-import json
-
 
 app = Flask(__name__)
-client = MongoClient('localhost', 27017)
+client = MongoClient('mongodbdummyapi', 27017)
 db = client.DummyApi
-data = []
-
 
 def register_user(username):
     userCollection = db[username]
     newData = [
         {
-            'título': 'Sua História',
-            'autor': 'Autora'
+            'title': 'Army Of Stone',
+            'author': 'Sawyer Moore'
         },
         {
-            'título': 'Microsoft',
-            'autor': 'teste'
+            'title': 'Gods Of Dusk',
+            'author': 'Kennedy Simpson'
         },
         {
-            'título': 'do Ano',
-            'autor': 'Jeff Bezos'
+            'title': 'Call To The Apocalypse',
+            'author': 'Ainsley Moore'
         }
     ]
     userCollection.insert_many(newData)
-    dado = []
+    data = []
     documents = userCollection.find()
     for document in documents:
-        # Convert ObjectId to string representation
         document['_id'] = str(document['_id'])
-        dado.append(document)
-    return jsonify(dado), 200
+        data.append(document)
+    return jsonify(data), 200
 
 @app.route('/data/<username>')
 def get_data(username):
     if username in db.list_collection_names():
-        dado = []
+        data = []
         documents = db[username].find()
         for document in documents:
-            # Convert ObjectId to string representation
             document['_id'] = str(document['_id'])
-            dado.append(document)
-        return jsonify(dado), 200
+            data.append(document)
+        return jsonify(data), 200
 
-    # If username is not found, create a new collection and append it to data
     return register_user(username)
 
 @app.route('/data/<username>/<id>')
@@ -56,7 +48,6 @@ def get_data_index(username, id):
     try:
         document = db[username].find_one({"_id": ObjectId(id)})
         if document:
-            # Convert ObjectId to string representation
             document['_id'] = str(document['_id'])
             return jsonify(document), 200
         else:
@@ -69,8 +60,10 @@ def create_data(username):
     json_data = request.get_json()
 
     if username in db.list_collection_names():
-        db[username].insert_one(json_data)
-        return jsonify({"message": "Success!"}), 200
+        dbResponse = db[username].insert_one(json_data)
+        print(dbResponse.inserted_id)
+        json_data.update({"_id": str(dbResponse.inserted_id)})
+        return jsonify({"message": "Success!", "value":json_data}), 200
     
     register_user()
 
@@ -82,13 +75,8 @@ def update_data(username, id):
         document = db[username].find_one({"_id": ObjectId(id)})
         
         if document:
-            # Update the document with the provided JSON data
-            db[username].update_one({'_id': document['_id']}, {'$set': json_data})
-            
-            # Fetch the updated document
+            db[username].update_one({'_id': document['_id']}, {'$set': json_data})            
             updated_document = db[username].find_one({'_id': document['_id']})
-            
-            # Convert ObjectId to string representation
             updated_document['_id'] = str(updated_document['_id'])
             
             return jsonify(updated_document), 200
@@ -108,4 +96,4 @@ def delete_data(username, id):
     return 'Data not found.', 404
 
 if __name__ == '__main__':
-    app.run(threaded=True,port=os.getenv("PORT", default=5000))
+    app.run(threaded=True, host="0.0.0.0" ,port=os.getenv("PORT", default=5003), debug=True)
