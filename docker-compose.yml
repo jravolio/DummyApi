@@ -1,0 +1,29 @@
+version: '3'
+services:
+  dummyapi:
+    build: .
+    ports:
+      - "5003:5003"
+    depends_on:
+      - mongodbdummyapi
+    networks:
+      - dummyapinetwork
+    container_name: dummyapi
+
+  mongodbdummyapi:
+    image: mongo:latest
+    hostname: mongodbdummyapi
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    container_name: mongodbdummyapi
+    networks:
+      - dummyapinetwork
+
+volumes:
+  mongodb_data:
+
+networks:
+  dummyapinetwork:
+    name: dummyapinetwork
