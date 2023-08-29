@@ -15,4 +15,4 @@ COPY run.py .
 COPY app ./app
 
 # Define the command to run the Flask app
-CMD ["python", "run.py"]
+CMD ["gunicorn", "run:app", "--bind=0.0.0.0:5003", "--log-level=DEBUG", "--workers=2"]
